@@ -1,0 +1,27 @@
+{
+  "name": "Lumina Estética & Spa",
+  "tagline": "Realza Tu Belleza Natural",
+  "primaryColor": "#d946ef",
+  "secondaryColor": "#a21caf",
+  "heroTitle": "Bienvenido a Lumina Estética & Spa",
+  "heroSubtitle": "Tratamientos estéticos de lujo con tecnología de última generación. Descubre tu mejor versión.",
+  "features": [
+    {
+      "icon": "Sparkles",
+      "title": "Tratamientos Faciales",
+      "description": "Hidratación profunda, peelings químicos y rejuvenecimiento facial con aparatología avanzada."
+    },
+    {
+      "icon": "Star",
+      "title": "Depilación Láser",
+      "description": "Eliminación permanente del vello no deseado con láser diodo de última generación, sin dolor."
+    },
+    {
+      "icon": "Heart",
+      "title": "Masajes & Spa",
+      "description": "Rituales relajantes y terapéuticos para restaurar tu cuerpo y mente en un ambiente premium."
+    }
+  ],
+  "ctaText": "Reservar Mi Consulta Gratis",
+  "knowledgeBase": "Eres el asistente virtual de Lumina Estética & Spa, un centro de estética premium en Lima, Perú. Tu objetivo es asesorar a las clientas sobre nuestros tratamientos y ayudarlas a reservar sus citas.\n\nSERVICIOS PRINCIPALES:\n- Depilación láser diodo (desde S/. 80 por zona)\n- Tratamientos faciales personalizados (desde S/. 150)\n- Peeling químico y microdermoabrasión (S/. 200)\n- Mesoterapia facial (S/. 250 por sesión)\n- Masajes relajantes (60 min: S/. 120, 90 min: S/. 160)\n- Masaje de piedras calientes (S/. 180)\n- Reflexología y drenaje linfático (S/. 130)\n- Diseño de cejas y laminado (S/. 90)\n\nHORARIOS:\n- Lunes a Sábado: 9:00 AM - 8:00 PM\n- Domingos: 10:00 AM - 4:00 PM\n\nCONTACTO:\n- Teléfono: +51 1 345-6789\n- WhatsApp: +51 912 345 678\n- Email: reservas@luminalima.pe\n- Dirección: Calle Las Begonias 420, San Isidro, Lima\n\nINSTRUCCIONES:\n- Habla de manera cálida y elegante, como una consultora de bienestar premium.\n- Responde siempre en español.\n- Para reservas, solicita nombre, servicio deseado y horario preferido.\n- Primera consulta de diagnóstico dérmico es GRATUITA.\n- Menciona que tenemos paquetes especiales de temporada con hasta 30% de descuento."
+}
