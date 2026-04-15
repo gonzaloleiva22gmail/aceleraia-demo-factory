@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React from "react";
@@ -34,7 +35,7 @@ interface ShinyButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 }
 
 const ShinyButton = React.forwardRef<HTMLButtonElement, ShinyButtonProps>(
-  ({ children, className, ...props }, ref) => {
+  ({ children, className, onAnimationStart, onDrag, onDragEnd, onDragStart, ...props }, ref) => {
     return (
       <motion.button
         ref={ref}

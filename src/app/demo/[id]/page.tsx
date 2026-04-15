@@ -211,7 +211,7 @@ export default async function DemoPage({ params }: PageProps) {
             <p className="text-muted-foreground">Todo lo que necesitas saber sobre {lead.name}</p>
           </div>
 
-          <Accordion type="single" collapsible className="w-full space-y-4">
+          <Accordion className="w-full space-y-4">
             {faqItems.map((item, idx) => (
               <AccordionItem key={idx} value={`item-${idx}`} className="border border-border/40 rounded-2xl px-6 bg-secondary/5 overflow-hidden">
                 <AccordionTrigger className="text-lg font-serif font-semibold hover:no-underline hover:text-primary transition-colors py-6">
