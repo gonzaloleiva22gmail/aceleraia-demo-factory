@@ -31,6 +31,7 @@ export default async function DemoPage({ params }: PageProps) {
 
   const primary   = lead.primaryColor  || FALLBACK_COLOR;
   const secondary = lead.secondaryColor || adjustColorServer(primary, -30);
+  const ctaHref   = lead.whatsappUrl ?? '#contact';
 
   return (
     <>
@@ -231,7 +232,7 @@ export default async function DemoPage({ params }: PageProps) {
 
             {/* CTAs */}
             <div className="fu d4" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <a href="#contact" className="lx-btn">
+              <a href={ctaHref} target={lead.whatsappUrl ? '_blank' : undefined} rel={lead.whatsappUrl ? 'noopener noreferrer' : undefined} className="lx-btn">
                 {lead.ctaText} <ArrowRight size={15} />
               </a>
               <a href="#services" className="lx-btn-ghost">
@@ -371,7 +372,7 @@ export default async function DemoPage({ params }: PageProps) {
               Agenda hoy y descubre un plan personalizado diseñado<br />
               exclusivamente para ti — sin compromisos.
             </p>
-            <a href="#contact" className="lx-btn-white">
+            <a href={ctaHref} target={lead.whatsappUrl ? '_blank' : undefined} rel={lead.whatsappUrl ? 'noopener noreferrer' : undefined} className="lx-btn-white">
               {lead.ctaText} <ArrowRight size={15} />
             </a>
           </div>

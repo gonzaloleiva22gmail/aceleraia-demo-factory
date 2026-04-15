@@ -11,5 +11,6 @@ export interface LeadData {
     description: string;
   }[];
   ctaText: string;
+  whatsappUrl?: string;
   knowledgeBase: string;
 }
