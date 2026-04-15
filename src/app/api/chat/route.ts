@@ -1,10 +1,15 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error('[Chat API] GEMINI_API_KEY is not set');
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
     const { messages, systemPrompt } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
@@ -12,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       systemInstruction: systemPrompt || 'You are a helpful assistant.',
     });
 
@@ -31,7 +36,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ reply: text });
   } catch (error) {
-    console.error('[Chat API Error]', error);
-    return NextResponse.json({ error: 'Failed to get response from AI' }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[Chat API Error]', message);
+    return NextResponse.json({ error: 'Failed to get response from AI', detail: message }, { status: 500 });
   }
 }
