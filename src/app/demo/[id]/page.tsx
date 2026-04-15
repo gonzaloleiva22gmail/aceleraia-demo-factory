@@ -1,12 +1,26 @@
 import { notFound } from 'next/navigation';
 import { getLeadData } from '@/lib/leads';
 import ChatWidget from '@/components/ChatWidget';
+import RetroGrid from '@/components/magicui/retro-grid';
+import ShinyButton from '@/components/magicui/shiny-button';
+import { BorderBeam } from '@/components/magicui/border-beam';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   CheckCircle, Shield, Sparkles, Smile, Star, Heart,
   Phone, Mail, MapPin, ArrowRight, ChevronRight,
 } from 'lucide-react';
-
-const FALLBACK_COLOR = '#7B52A8';
 
 const iconMap: Record<string, React.ElementType> = {
   CheckCircle, Shield, Sparkles, Smile, Star, Heart, Phone, Mail, MapPin,
@@ -20,451 +34,298 @@ export async function generateMetadata({ params }: PageProps) {
   const lead = getLeadData(params.id);
   if (!lead) return { title: 'Demo Not Found' };
   return {
-    title: `${lead.name} — Powered by AceleraIA`,
+    title: `${lead.name} — Premium AI Experience`,
     description: lead.heroSubtitle,
   };
+}
+
+/** 
+ * Helper to parse the knowledgeBase text block into FAQ items.
+ * Splits by sections that look like "UPPERCASE TITLE:" and cleans up lines.
+ */
+function parseKnowledgeBase(kb: string) {
+  const sections: { title: string; content: string[] }[] = [];
+  const lines = kb.split('\n');
+  
+  let currentSection: { title: string; content: string[] } | null = null;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // Check if line is a heading (e.g. "SERVICIOS PRINCIPALES:")
+    if (trimmed.match(/^[A-Z\sÑÁÉÍÓÚ]+:$/)) {
+      currentSection = { 
+        title: trimmed.replace(':', ''), 
+        content: [] 
+      };
+      sections.push(currentSection);
+    } else if (currentSection) {
+      // Clean up bullet points or extra markers
+      const cleanedLine = trimmed.replace(/^[-*]\s*/, '');
+      currentSection.content.push(cleanedLine);
+    } else {
+      // Create a default first section if none found yet
+      currentSection = { title: "Información General", content: [trimmed] };
+      sections.push(currentSection);
+    }
+  });
+
+  return sections;
 }
 
 export default async function DemoPage({ params }: PageProps) {
   const lead = getLeadData(params.id);
   if (!lead) notFound();
 
-  const primary   = lead.primaryColor  || FALLBACK_COLOR;
-  const secondary = lead.secondaryColor || adjustColorServer(primary, -30);
-  const ctaHref   = lead.whatsappUrl ?? '#contact';
+  const primary = lead.primaryColor || '#7B52A8';
+  const secondary = lead.secondaryColor || primary;
+  const ctaHref = lead.whatsappUrl ?? '#contact';
+  
+  const faqItems = parseKnowledgeBase(lead.knowledgeBase);
 
   return (
-    <>
-      {/* ─── Global styles ─── */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
-
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20">
+      {/* ─── DYNAMIC COLOR BINDING ─── */}
+      <style dangerouslySetInnerHTML={{ __html: `
         :root {
-          --p:  ${primary};
-          --s:  ${secondary};
-          --dk: #0D0D0D;
-          --dk2: #111111;
-          --cr: #F9F6F1;
+          --primary: ${primary};
+          --secondary: ${secondary};
+          --accent: ${secondary};
+          --primary-foreground: #ffffff;
+          --secondary-foreground: #ffffff;
+          --ring: ${primary};
+          --border: ${secondary}33;
         }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        .lx-serif { font-family: 'Playfair Display', Georgia, serif; }
-        .lx-sans  { font-family: 'Inter', system-ui, sans-serif; }
-
-        /* Buttons */
-        .lx-btn {
-          display: inline-flex; align-items: center; gap: .5rem;
-          padding: .9rem 2.2rem;
-          background: var(--p); color: #fff;
-          font-family: 'Inter', sans-serif; font-size: .78rem;
-          font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
-          text-decoration: none; border: none; cursor: pointer;
-          transition: background .3s, transform .25s;
+        .dark {
+          --primary: ${primary};
+          --secondary: ${secondary};
+          --border: ${secondary}44;
         }
-        .lx-btn:hover { background: var(--s); transform: translateY(-2px); }
+      `}} />
 
-        .lx-btn-ghost {
-          display: inline-flex; align-items: center; gap: .5rem;
-          padding: .9rem 2.2rem;
-          background: transparent; color: #fff;
-          font-family: 'Inter', sans-serif; font-size: .78rem;
-          font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
-          text-decoration: none; border: 1px solid rgba(255,255,255,.35); cursor: pointer;
-          transition: background .3s, border-color .3s;
-        }
-        .lx-btn-ghost:hover { background: rgba(255,255,255,.08); border-color: #fff; }
-
-        .lx-btn-white {
-          display: inline-flex; align-items: center; gap: .5rem;
-          padding: .9rem 2.2rem;
-          background: #fff; color: var(--p);
-          font-family: 'Inter', sans-serif; font-size: .78rem;
-          font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-          text-decoration: none; border: none; cursor: pointer;
-          transition: opacity .25s, transform .25s;
-        }
-        .lx-btn-white:hover { opacity: .9; transform: translateY(-2px); }
-
-        /* Nav link */
-        .nav-link {
-          color: rgba(255,255,255,.55); font-size: .75rem; letter-spacing: .12em;
-          text-transform: uppercase; text-decoration: none;
-          transition: color .2s;
-        }
-        .nav-link:hover { color: #fff; }
-
-        /* Service card */
-        .svc-card {
-          background: #fff; padding: 3rem 2.5rem;
-          border: 1px solid #E8E4DF; position: relative; overflow: hidden;
-          transition: transform .35s, box-shadow .35s;
-        }
-        .svc-card::after {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-          background: linear-gradient(90deg, var(--p), var(--s));
-          transform: scaleX(0); transform-origin: left; transition: transform .35s;
-        }
-        .svc-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(0,0,0,.11); }
-        .svc-card:hover::after { transform: scaleX(1); }
-
-        .svc-num {
-          position: absolute; top: -.5rem; right: 1.5rem;
-          font-family: 'Playfair Display', serif; font-size: 6rem; font-weight: 700;
-          color: ${primary}10; line-height: 1; user-select: none; pointer-events: none;
-        }
-
-        /* Trust pill */
-        .trust-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,.07); }
-
-        /* Fade-up animation */
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(28px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .fu  { animation: fadeUp .8s ease forwards; }
-        .d1  { animation-delay: .1s; opacity: 0; }
-        .d2  { animation-delay: .25s; opacity: 0; }
-        .d3  { animation-delay: .4s;  opacity: 0; }
-        .d4  { animation-delay: .55s; opacity: 0; }
-
-        /* Footer link */
-        .ft-link { color: var(--p); font-weight: 600; text-decoration: none; }
-        .ft-link:hover { opacity: .8; }
-
-        /* Chat widget override — minimal */
-        .lx-chat-btn {
-          width: 56px; height: 56px; border-radius: 50%;
-          box-shadow: 0 8px 32px rgba(0,0,0,.35);
-        }
-      `}</style>
-
-      <div style={{ fontFamily: "'Inter', system-ui, sans-serif", background: 'var(--dk)', color: '#fff', minHeight: '100vh' }}>
-
-        {/* ════════════════════ NAVBAR ════════════════════ */}
-        <nav style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-          background: 'rgba(13,13,13,.88)', backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,.06)',
-        }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', height: 72,
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            {/* Logo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{
-                width: 38, height: 38,
-                background: `linear-gradient(135deg, ${primary}, ${secondary})`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <span className="lx-serif" style={{ color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
-                  {lead.name.charAt(0)}
-                </span>
-              </div>
-              <span className="lx-serif" style={{ fontSize: '1.15rem', fontWeight: 600, letterSpacing: '.02em' }}>
-                {lead.name}
+      {/* ════════════════════ NAVBAR ════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="relative w-10 h-10 flex items-center justify-center overflow-hidden rounded-xl bg-primary">
+              <span className="font-serif text-white font-bold text-xl relative z-10">
+                {lead.name.charAt(0)}
               </span>
+              <BorderBeam size={40} duration={4} borderWidth={2} />
             </div>
-
-            {/* Links + CTA */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-              <a href="#services" className="nav-link">Servicios</a>
-              <a href="#contact"  className="nav-link">Contacto</a>
-              <a href="#contact"  className="lx-btn" style={{ padding: '.65rem 1.6rem', fontSize: '.72rem' }}>
-                Reservar
-              </a>
-            </div>
-          </div>
-        </nav>
-
-        {/* ════════════════════ HERO ════════════════════ */}
-        <section style={{
-          minHeight: '100vh', paddingTop: 72,
-          display: 'flex', alignItems: 'center',
-          background: `linear-gradient(140deg, #0D0D0D 0%, #1C0D30 55%, #0A1820 100%)`,
-          position: 'relative', overflow: 'hidden',
-        }}>
-          {/* Glow orbs */}
-          <div style={{
-            position: 'absolute', top: '8%', right: '4%',
-            width: 560, height: 560, borderRadius: '50%',
-            background: `radial-gradient(circle, ${primary}1A 0%, transparent 68%)`,
-            pointerEvents: 'none',
-          }} />
-          <div style={{
-            position: 'absolute', bottom: '8%', left: '2%',
-            width: 340, height: 340, borderRadius: '50%',
-            background: `radial-gradient(circle, ${secondary}12 0%, transparent 68%)`,
-            pointerEvents: 'none',
-          }} />
-          {/* Thin vertical accent line */}
-          <div style={{
-            position: 'absolute', left: '6%', top: '20%',
-            width: 1, height: '40%',
-            background: `linear-gradient(to bottom, transparent, ${primary}55, transparent)`,
-          }} />
-
-          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '5rem 2rem', width: '100%', position: 'relative', zIndex: 10 }}>
-
-            {/* Eyebrow */}
-            <div className="fu d1" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-              <div style={{ width: 40, height: 1, background: primary }} />
-              <span style={{ fontSize: '.73rem', letterSpacing: '.2em', textTransform: 'uppercase', color: primary, fontWeight: 500 }}>
-                {lead.tagline}
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="lx-serif fu d2" style={{
-              fontSize: 'clamp(2.6rem, 6vw, 5.2rem)', fontWeight: 600,
-              lineHeight: 1.08, maxWidth: 780, marginBottom: '2rem',
-            }}>
-              Donde la Ciencia<br />
-              <em style={{ color: primary }}>Encuentra</em> tu<br />
-              Belleza Natural
-            </h1>
-
-            <p className="fu d3" style={{
-              fontSize: '1.05rem', color: 'rgba(255,255,255,.6)',
-              maxWidth: 520, lineHeight: 1.85, marginBottom: '3rem', fontWeight: 300,
-            }}>
-              {lead.heroSubtitle}
-            </p>
-
-            {/* CTAs */}
-            <div className="fu d4" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <a href={ctaHref} target={lead.whatsappUrl ? '_blank' : undefined} rel={lead.whatsappUrl ? 'noopener noreferrer' : undefined} className="lx-btn">
-                {lead.ctaText} <ArrowRight size={15} />
-              </a>
-              <a href="#services" className="lx-btn-ghost">
-                Ver tratamientos
-              </a>
-            </div>
-
-            {/* Stats row */}
-            <div className="fu d4" style={{
-              display: 'flex', gap: '3rem', marginTop: '5rem',
-              paddingTop: '3rem', borderTop: '1px solid rgba(255,255,255,.08)',
-              flexWrap: 'wrap',
-            }}>
-              {[
-                { value: '12+', label: 'Años de experiencia' },
-                { value: '500+', label: 'Pacientes satisfechos' },
-                { value: '4.9★', label: 'Calificación media' },
-                { value: '30+', label: 'Tratamientos' },
-              ].map((s) => (
-                <div key={s.label}>
-                  <div className="lx-serif" style={{ fontSize: '2.6rem', fontWeight: 700, color: primary, lineHeight: 1 }}>
-                    {s.value}
-                  </div>
-                  <div style={{ fontSize: '.72rem', color: 'rgba(255,255,255,.45)', marginTop: '.5rem', letterSpacing: '.07em', textTransform: 'uppercase' }}>
-                    {s.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════════════ SERVICES ════════════════════ */}
-        <section id="services" style={{ padding: '7rem 2rem', background: 'var(--cr)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-
-            {/* Section header */}
-            <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
-              <span style={{ fontSize: '.72rem', letterSpacing: '.2em', textTransform: 'uppercase', color: primary, fontWeight: 500 }}>
-                Nuestros Tratamientos
-              </span>
-              <div style={{ width: 40, height: 1, background: primary, margin: '1.25rem auto' }} />
-              <h2 className="lx-serif" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 600, color: '#0D0D0D', lineHeight: 1.2 }}>
-                Servicios de Alto Estándar
-              </h2>
-              <p style={{ marginTop: '1rem', color: '#6B7280', fontSize: '.95rem', maxWidth: 480, margin: '1rem auto 0' }}>
-                Cada tratamiento es diseñado a medida, con tecnología de punta y un equipo médico certificado.
-              </p>
-            </div>
-
-            {/* Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '2rem' }}>
-              {lead.features.map((feature, idx) => {
-                const Icon = iconMap[feature.icon] || Sparkles;
-                return (
-                  <div key={idx} className="svc-card">
-                    <span className="svc-num">{String(idx + 1).padStart(2, '0')}</span>
-
-                    {/* Icon box */}
-                    <div style={{
-                      width: 54, height: 54,
-                      background: `${primary}16`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      marginBottom: '1.75rem',
-                    }}>
-                      <Icon size={24} style={{ color: primary }} />
-                    </div>
-
-                    <h3 className="lx-serif" style={{ fontSize: '1.35rem', fontWeight: 600, color: '#0D0D0D', marginBottom: '1rem', lineHeight: 1.3 }}>
-                      {feature.title}
-                    </h3>
-                    <p style={{ fontSize: '.88rem', color: '#6B7280', lineHeight: 1.85, fontWeight: 300 }}>
-                      {feature.description}
-                    </p>
-
-                    {/* Inline CTA */}
-                    <div style={{
-                      marginTop: '2rem', display: 'flex', alignItems: 'center',
-                      gap: '.4rem', color: primary, fontSize: '.75rem',
-                      letterSpacing: '.09em', textTransform: 'uppercase', fontWeight: 500,
-                    }}>
-                      <span>Más información</span>
-                      <ChevronRight size={13} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* ════════════════════ TRUST STRIP ════════════════════ */}
-        <section style={{ background: '#111', borderTop: `2px solid ${primary}`, padding: '4.5rem 2rem' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 0 }}>
-            {[
-              { Icon: Shield,       title: 'Médicos Certificados',    desc: 'Equipo de especialistas avalados' },
-              { Icon: Star,         title: 'Tecnología de Punta',     desc: 'Equipos de última generación' },
-              { Icon: Sparkles,     title: 'Resultados Naturales',    desc: 'Estética que realza tu belleza' },
-              { Icon: CheckCircle,  title: 'Primera Consulta Gratis', desc: 'Sin compromisos, sin costo' },
-            ].map(({ Icon, title, desc }) => (
-              <div key={title} className="trust-item" style={{ padding: '2.5rem 1.5rem', textAlign: 'center' }}>
-                <Icon size={28} style={{ color: primary, marginBottom: '1rem' }} />
-                <div className="lx-serif" style={{ fontSize: '1.05rem', fontWeight: 600, color: '#fff', marginBottom: '.45rem' }}>
-                  {title}
-                </div>
-                <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,.4)', lineHeight: 1.65 }}>
-                  {desc}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ════════════════════ CTA BANNER ════════════════════ */}
-        <section style={{
-          padding: '8rem 2rem',
-          background: `linear-gradient(140deg, ${primary} 0%, #1A0D2E 45%, ${adjustColorServer(secondary, -20)} 100%)`,
-          textAlign: 'center', position: 'relative', overflow: 'hidden',
-        }}>
-          {/* Subtle radial glow */}
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse at center, rgba(255,255,255,.05) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }} />
-
-          <div style={{ maxWidth: 680, margin: '0 auto', position: 'relative', zIndex: 10 }}>
-            <span style={{ fontSize: '.72rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,.65)', fontWeight: 500 }}>
-              Comienza tu transformación
+            <span className="font-serif text-xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
+              {lead.name}
             </span>
-            <div style={{ width: 40, height: 1, background: 'rgba(255,255,255,.35)', margin: '1.25rem auto' }} />
-            <h2 className="lx-serif" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 600, color: '#fff', lineHeight: 1.15, marginBottom: '1.5rem' }}>
-              Tu Primera Consulta<br />
-              <em>es Completamente Gratis</em>
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,.65)', fontSize: '1rem', lineHeight: 1.85, marginBottom: '3rem', fontWeight: 300 }}>
-              Agenda hoy y descubre un plan personalizado diseñado<br />
-              exclusivamente para ti — sin compromisos.
-            </p>
-            <a href={ctaHref} target={lead.whatsappUrl ? '_blank' : undefined} rel={lead.whatsappUrl ? 'noopener noreferrer' : undefined} className="lx-btn-white">
-              {lead.ctaText} <ArrowRight size={15} />
+          </div>
+
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">Servicios</a>
+            <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">FAQ</a>
+            <a href={ctaHref}>
+              <ShinyButton className="h-10 px-6">Reservar Ahora</ShinyButton>
             </a>
           </div>
-        </section>
+        </div>
+      </nav>
 
-        {/* ════════════════════ FOOTER / CONTACT ════════════════════ */}
-        <footer id="contact" style={{ background: '#0A0A0A', padding: '5rem 2rem 3rem', borderTop: '1px solid rgba(255,255,255,.06)' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '4rem', marginBottom: '4rem' }}>
+      {/* ════════════════════ HERO ════════════════════ */}
+      <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        <RetroGrid className="opacity-20" />
+        
+        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Sparkles size={14} />
+            {lead.tagline}
+          </div>
 
-              {/* Brand */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.5rem' }}>
-                  <div style={{ width: 38, height: 38, background: `linear-gradient(135deg, ${primary}, ${secondary})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="lx-serif" style={{ color: '#fff', fontWeight: 600 }}>{lead.name.charAt(0)}</span>
-                  </div>
-                  <span className="lx-serif" style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff' }}>{lead.name}</span>
-                </div>
-                <p style={{ color: 'rgba(255,255,255,.38)', fontSize: '.85rem', lineHeight: 1.85, maxWidth: 240 }}>
-                  {lead.tagline} — Tu centro de medicina estética de confianza en Lima.
-                </p>
-              </div>
+          <h1 className="font-serif text-5xl md:text-8xl font-bold leading-[1.1] mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 italic">
+            {lead.heroTitle.split(' ').map((word, i) => (
+              <span key={i} className={i % 3 === 2 ? "text-primary not-italic" : ""}>{word} </span>
+            ))}
+          </h1>
 
-              {/* Contact */}
-              <div>
-                <h4 className="lx-serif" style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', marginBottom: '1.5rem', letterSpacing: '.02em' }}>
-                  Contacto
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {[
-                    { Icon: Phone,  text: '+51 924 966 312' },
-                    { Icon: Mail,   text: 'ventas@pielbella.pe' },
-                    { Icon: MapPin, text: 'Jr. Gozzoli Nte. 601, San Borja, Lima' },
-                  ].map(({ Icon, text }) => (
-                    <div key={text} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem', color: 'rgba(255,255,255,.45)', fontSize: '.85rem', lineHeight: 1.55 }}>
-                      <Icon size={14} style={{ color: primary, flexShrink: 0, marginTop: 2 }} />
-                      <span>{text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed animate-in fade-in slide-in-from-bottom-12 duration-700 delay-200">
+            {lead.heroSubtitle}
+          </p>
 
-              {/* Hours */}
-              <div>
-                <h4 className="lx-serif" style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', marginBottom: '1.5rem' }}>
-                  Horario de Atención
-                </h4>
-                <div style={{ color: 'rgba(255,255,255,.45)', fontSize: '.85rem', lineHeight: 2 }}>
-                  <div>Lunes – Viernes</div>
-                  <div style={{ color: primary, fontWeight: 500 }}>9:00 AM – 7:00 PM</div>
-                  <div style={{ marginTop: '.5rem' }}>Sábados y Domingos</div>
-                  <div style={{ color: 'rgba(255,255,255,.28)' }}>Consultar disponibilidad</div>
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-16 duration-700 delay-300">
+            <a href={ctaHref}>
+              <ShinyButton className="h-14 px-10 text-lg">
+                {lead.ctaText}
+              </ShinyButton>
+            </a>
+            <a href="#services" className="h-14 px-10 inline-flex items-center justify-center font-medium hover:text-primary transition-colors">
+              Explorar Tratamientos <ChevronRight className="ml-1" size={18} />
+            </a>
+          </div>
+        </div>
 
-            {/* Bottom bar */}
-            <div style={{
-              paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,.06)',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              flexWrap: 'wrap', gap: '1rem',
-            }}>
-              <span style={{ color: 'rgba(255,255,255,.22)', fontSize: '.78rem' }}>
-                © {new Date().getFullYear()} {lead.name}. Todos los derechos reservados.
-              </span>
-              <span style={{ color: 'rgba(255,255,255,.22)', fontSize: '.78rem' }}>
-                Demo creado por{' '}
-                <a href="https://aceleraia.com" target="_blank" rel="noopener noreferrer" className="ft-link">
-                  AceleraIA
-                </a>
-              </span>
+        {/* Decorative elements */}
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/10 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-secondary/10 blur-[120px] pointer-events-none" />
+      </section>
+
+      {/* ════════════════════ SERVICES ════════════════════ */}
+      <section id="services" className="py-32 relative bg-secondary/5">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div className="max-w-xl">
+              <h2 className="font-serif text-4xl md:text-6xl font-bold mb-4">Experiencia de Lujo</h2>
+              <p className="text-muted-foreground">Tecnología de vanguardia y resultados excepcionales diseñados para realzar tu esencia natural.</p>
             </div>
           </div>
-        </footer>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {lead.features.map((feature, idx) => {
+              const Icon = iconMap[feature.icon] || Sparkles;
+              return (
+                <Card key={idx} className="group relative overflow-hidden bg-background/50 backdrop-blur-sm border-border/40 hover:border-primary/40 transition-all duration-500 hover:-translate-y-2">
+                  <CardHeader>
+                    <div className="w-14 h-14 rounded-2xl bg-secondary/10 border border-secondary/20 flex items-center justify-center mb-4 transition-colors group-hover:bg-primary/10 group-hover:border-primary/20">
+                      <Icon className="text-primary" size={28} />
+                    </div>
+                    <CardTitle className="font-serif text-2xl mb-2">{feature.title}</CardTitle>
+                    <CardDescription className="text-base leading-relaxed">
+                      {feature.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <a href={ctaHref} className="inline-flex items-center text-sm font-bold text-primary group-hover:gap-2 transition-all">
+                      Saber más <ArrowRight size={14} className="ml-1" />
+                    </a>
+                  </CardContent>
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 transition-transform duration-700 group-hover:scale-150" />
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════ SMART FAQ ════════════════════ */}
+      <section id="faq" className="py-32 bg-background">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-4xl md:text-6xl font-bold mb-4">Preguntas Frecuentes</h2>
+            <p className="text-muted-foreground">Todo lo que necesitas saber sobre {lead.name}</p>
+          </div>
+
+          <Accordion type="single" collapsible className="w-full space-y-4">
+            {faqItems.map((item, idx) => (
+              <AccordionItem key={idx} value={`item-${idx}`} className="border border-border/40 rounded-2xl px-6 bg-secondary/5 overflow-hidden">
+                <AccordionTrigger className="text-lg font-serif font-semibold hover:no-underline hover:text-primary transition-colors py-6">
+                  {item.title}
+                </AccordionTrigger>
+                <AccordionContent className="pb-6">
+                  <ul className="space-y-3">
+                    {item.content.map((line, lidx) => (
+                      <li key={lidx} className="flex gap-3 text-muted-foreground leading-relaxed">
+                        <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-primary/40 flex-shrink-0" />
+                        <span className={line.includes('S/.') || line.includes(':') ? "text-foreground font-medium" : ""}>
+                          {line}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* ════════════════════ CTA ════════════════════ */}
+      <section className="py-32">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="relative rounded-[3rem] overflow-hidden bg-primary px-8 py-20 md:py-32 text-center text-white">
+            <RetroGrid className="opacity-10 dark:opacity-20" />
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <h2 className="font-serif text-4xl md:text-7xl font-bold mb-8 italic">
+                La Mejor Versión De Ti <br/>
+                <span className="not-italic">Empieza Aquí</span>
+              </h2>
+              <p className="text-lg md:text-xl text-white/80 mb-12 max-w-xl mx-auto font-light">
+                Únete a los cientos de pacientes que han transformado su bienestar en nuestras manos expertas.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <a href={ctaHref}>
+                  <button className="h-16 px-12 rounded-full bg-white text-primary font-bold text-lg hover:scale-105 transition-transform shadow-2xl">
+                    Agendar Mi Consulta Gratis
+                  </button>
+                </a>
+                <div className="flex -space-x-3 items-center">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="w-12 h-12 rounded-full border-2 border-primary bg-secondary/20 flex items-center justify-center overflow-hidden">
+                      <Smile size={24} className="text-white/60" />
+                    </div>
+                  ))}
+                  <span className="ml-4 text-sm font-medium text-white/80">+500 pacientes felices</span>
+                </div>
+              </div>
+            </div>
+            <BorderBeam size={800} duration={8} borderWidth={4} colorFrom="#fff" colorTo="rgba(255,255,255,0.3)" />
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════ FOOTER ════════════════════ */}
+      <footer className="py-20 border-t border-border/40">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+          <div className="md:col-span-1">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-serif text-white font-bold">
+                {lead.name.charAt(0)}
+              </div>
+              <span className="font-serif text-xl font-bold">{lead.name}</span>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Cuidado estético integral con estándares internacionales. Innovación y elegancia en cada tratamiento.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-bold mb-6 text-foreground/80 uppercase tracking-widest text-xs">Contacto</h4>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <Phone size={16} className="text-primary" />
+                <span>+51 924 966 312</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <Mail size={16} className="text-primary" />
+                <span>contacto@{lead.name.toLowerCase().replace(/\s+/g, '')}.pe</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-bold mb-6 text-foreground/80 uppercase tracking-widest text-xs">Ubicación</h4>
+            <div className="flex items-start gap-3 text-sm text-muted-foreground">
+              <MapPin size={16} className="text-primary mt-1 flex-shrink-0" />
+              <span>Jr. Gozzoli Nte. 601, San Borja, Lima, Perú</span>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-bold mb-6 text-foreground/80 uppercase tracking-widest text-xs">Legal</h4>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>© {new Date().getFullYear()} {lead.name}</p>
+              <p>Políticas de Privacidad</p>
+              <p className="text-[10px] pt-4 opacity-50">Powered by AceleraIA Demo Factory</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ─── Chat Widget with BorderBeam ─── */}
+      <div className="fixed bottom-6 right-6 z-50 overflow-hidden rounded-full shadow-2xl">
+        <ChatWidget
+          primaryColor={primary}
+          clientName={lead.name}
+          knowledgeBase={lead.knowledgeBase}
+        />
+        <BorderBeam size={60} duration={6} />
       </div>
-
-      {/* ─── Chat Widget ─── */}
-      <ChatWidget
-        primaryColor={primary}
-        clientName={lead.name}
-        knowledgeBase={lead.knowledgeBase}
-      />
-    </>
+    </div>
   );
-}
-
-function adjustColorServer(hex: string, amount: number): string {
-  const clamp = (n: number) => Math.min(255, Math.max(0, n));
-  const cleaned = hex.replace('#', '');
-  const r = parseInt(cleaned.substring(0, 2), 16);
-  const g = parseInt(cleaned.substring(2, 4), 16);
-  const b = parseInt(cleaned.substring(4, 6), 16);
-  const toHex = (n: number) => clamp(n + amount).toString(16).padStart(2, '0');
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
