@@ -1,7 +1,5 @@
 import { notFound } from 'next/navigation';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { LeadData } from '@/types/lead';
+import { getLeadData } from '@/lib/leads';
 import ChatWidget from '@/components/ChatWidget';
 import { CheckCircle, Shield, Sparkles, Smile, Star, Heart, Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
 
@@ -24,18 +22,8 @@ interface PageProps {
   params: { id: string };
 }
 
-async function getLeadData(id: string): Promise<LeadData | null> {
-  try {
-    const filePath = path.join(process.cwd(), 'leads', `${id}.json`);
-    const fileContents = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(fileContents) as LeadData;
-  } catch {
-    return null;
-  }
-}
-
 export async function generateMetadata({ params }: PageProps) {
-  const lead = await getLeadData(params.id);
+  const lead = getLeadData(params.id);
   if (!lead) return { title: 'Demo Not Found' };
   return {
     title: `${lead.name} — Powered by AceleraIA`,
@@ -44,7 +32,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function DemoPage({ params }: PageProps) {
-  const lead = await getLeadData(params.id);
+  const lead = getLeadData(params.id);
 
   if (!lead) {
     notFound();
@@ -138,14 +126,14 @@ export default async function DemoPage({ params }: PageProps) {
             >
               {lead.heroTitle.split(lead.name).map((part, i, arr) =>
                 i < arr.length - 1 ? (
-                  <>
+                  <span key={i}>
                     {part}
-                    <span key={i} style={{ color: primary }}>
+                    <span style={{ color: primary }}>
                       {lead.name}
                     </span>
-                  </>
+                  </span>
                 ) : (
-                  part
+                  <span key={i}>{part}</span>
                 )
               )}
             </h1>
@@ -156,21 +144,19 @@ export default async function DemoPage({ params }: PageProps) {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animate-delay-400">
               <a
-                href="https://wa.me/51987654321"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#contact"
                 className="btn-primary px-8 py-3.5 rounded-full text-base font-semibold flex items-center justify-center gap-2 shadow-lg"
               >
                 {lead.ctaText}
                 <ArrowRight className="w-4 h-4" />
               </a>
-              <button
-                className="px-8 py-3.5 rounded-full text-base font-semibold border-2 text-gray-700 hover:bg-gray-50 transition-colors"
+              <a
+                href="#services"
+                className="px-8 py-3.5 rounded-full text-base font-semibold border-2 text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                 style={{ borderColor: primary + '60' }}
-                onClick={() => {}}
               >
                 Ver más información
-              </button>
+              </a>
             </div>
 
             {/* Social proof */}
@@ -198,7 +184,7 @@ export default async function DemoPage({ params }: PageProps) {
         </section>
 
         {/* ─── Features ─── */}
-        <section className="py-24 px-6 bg-gray-50">
+        <section id="services" className="py-24 px-6 bg-gray-50">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Nuestros Servicios</h2>
@@ -237,9 +223,7 @@ export default async function DemoPage({ params }: PageProps) {
               Tu primera consulta es completamente gratuita. Sin compromisos.
             </p>
             <a
-              href="https://wa.me/51987654321"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#contact"
               className="inline-flex items-center gap-2 bg-white px-8 py-3.5 rounded-full text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
               style={{ color: primary }}
             >
@@ -266,14 +250,14 @@ export default async function DemoPage({ params }: PageProps) {
                 <p className="text-sm max-w-xs leading-relaxed">{lead.tagline}</p>
               </div>
               <div className="flex flex-col gap-3 text-sm">
-                <a href="tel:+5112345678" className="flex items-center gap-2 hover:text-white transition-colors">
+                <span className="flex items-center gap-2">
                   <Phone className="w-4 h-4" style={{ color: primary }} />
-                  +51 1 234-5678
-                </a>
-                <a href="mailto:info@example.pe" className="flex items-center gap-2 hover:text-white transition-colors">
+                  Lima, Perú
+                </span>
+                <span className="flex items-center gap-2">
                   <Mail className="w-4 h-4" style={{ color: primary }} />
-                  info@example.pe
-                </a>
+                  Contáctanos por el chat
+                </span>
                 <span className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" style={{ color: primary }} />
                   Lima, Perú
